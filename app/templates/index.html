@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Income Prediction Dashboard</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      color: #eef2ff;
+      background: #090b14;
+      font-family: Inter, system-ui, sans-serif;
+      line-height: 1.5;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; }
+    .page { max-width: 1220px; margin: 0 auto; padding: 2rem; }
+    header { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+    h1 { margin: 0; font-size: clamp(2rem, 3vw, 3rem); letter-spacing: -0.05em; }
+    p.lead { color: #c7d2fe; max-width: 780px; margin: 0.75rem 0 0; }
+    .badge { display: inline-flex; gap: .5rem; align-items: center; background: rgba(148, 163, 184, .12); border: 1px solid rgba(148, 163, 184, .18); color: #c7d2fe; border-radius: 999px; padding: .55rem 1rem; font-size: .85rem; }
+    .grid { display: grid; gap: 1rem; }
+    .card { background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(148, 163, 184, .14); border-radius: 24px; padding: 1.6rem; box-shadow: 0 30px 80px rgba(15,23,42,.15); }
+    .card h2 { margin-top: 0; }
+    .field { display: grid; gap: 0.5rem; }
+    label { font-weight: 600; color: #f8fafc; }
+    input, select { width: 100%; border: 1px solid rgba(148, 163, 184, .18); border-radius: 12px; background: #111827; color: #f8fafc; padding: .85rem 1rem; font: inherit; }
+    input[type=file] { padding: .6rem 0; }
+    button { appearance: none; border: none; border-radius: 14px; padding: 0.95rem 1.3rem; font-weight: 700; cursor: pointer; color: #091c5d; background: #e0e7ff; transition: transform .15s ease, background .15s ease; }
+    button:hover { transform: translateY(-1px); background: #c7d2fe; }
+    .row { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .row-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .response { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; white-space: pre-wrap; background: rgba(148, 163, 184, .08); padding: 1rem; border-radius: 16px; color: #e2e8f0; overflow-x: auto; }
+    .hidden { display: none; }
+    .meta { color: #94a3b8; font-size: .95rem; margin-bottom: 1rem; }
+    .pill { display: inline-flex; align-items: center; gap: .5rem; padding: .45rem .75rem; border-radius: 999px; font-size: .9rem; font-weight: 700; }
+    .pill.high { background: rgba(34,197,94,.12); color: #a7f3d0; }
+    .pill.medium { background: rgba(250,204,21,.12); color: #fef08a; }
+    .pill.low { background: rgba(239,68,68,.12); color: #fecaca; }
+    @media (max-width: 960px) { .row, .row-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <div class="badge">FastAPI · Docker · Render</div>
+        <h1>Income Prediction System</h1>
+        <p class="lead">Predict whether an individual earns more than $50K/year using a production-ready FastAPI model endpoint and an interactive browser dashboard.</p>
+      </div>
+      <div style="text-align:right; min-width:220px;">
+        <p class="meta">Use the form to submit one record, or upload a CSV for batch inference.</p>
+        <p class="meta">API docs: <a href="/docs" style="color:#bfdbfe;">/docs</a></p>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>Single record prediction</h2>
+      <p class="meta">Fill in the census data below and click <strong>Predict income</strong>.</p>
+      <form id="predict-form" class="grid">
+        <div class="row">
+          <div class="field"><label for="age">Age</label><input id="age" name="age" type="number" min="17" max="90" value="35" required></div>
+          <div class="field"><label for="workclass">Workclass</label><select id="workclass" name="workclass" required></select></div>
+          <div class="field"><label for="fnlwgt">Final weight</label><input id="fnlwgt" name="fnlwgt" type="number" min="1" value="215646" required></div>
+        </div>
+
+        <div class="row">
+          <div class="field"><label for="education">Education</label><select id="education" name="education" required></select></div>
+          <div class="field"><label for="education_num">Education level</label><input id="education_num" name="education_num" type="number" min="1" max="16" value="13" required></div>
+          <div class="field"><label for="marital_status">Marital status</label><select id="marital_status" name="marital_status" required></select></div>
+        </div>
+
+        <div class="row">
+          <div class="field"><label for="occupation">Occupation</label><select id="occupation" name="occupation" required></select></div>
+          <div class="field"><label for="relationship">Relationship</label><select id="relationship" name="relationship" required></select></div>
+          <div class="field"><label for="race">Race</label><select id="race" name="race" required></select></div>
+        </div>
+
+        <div class="row">
+          <div class="field"><label for="sex">Sex</label><select id="sex" name="sex" required></select></div>
+          <div class="field"><label for="capital_gain">Capital gain</label><input id="capital_gain" name="capital_gain" type="number" min="0" value="0" required></div>
+          <div class="field"><label for="capital_loss">Capital loss</label><input id="capital_loss" name="capital_loss" type="number" min="0" value="0" required></div>
+        </div>
+
+        <div class="row">
+          <div class="field"><label for="hours_per_week">Hours per week</label><input id="hours_per_week" name="hours_per_week" type="number" min="1" max="99" value="40" required></div>
+          <div class="field"><label for="native_country">Native country</label><select id="native_country" name="native_country" required></select></div>
+        </div>
+
+        <button type="submit">Predict income</button>
+      </form>
+
+      <div id="result-card" class="card hidden" style="margin-top:1.5rem;">
+        <h2>Prediction result</h2>
+        <div class="meta" id="result-summary"></div>
+        <div class="response" id="result-json"></div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:2rem;">
+      <h2>Batch CSV prediction</h2>
+      <p class="meta">Upload a CSV file with the original UCI Adult column names. The API returns predictions and a summary.</p>
+      <form id="batch-form">
+        <div class="row-2">
+          <div class="field"><label for="batch-file">Upload CSV file</label><input id="batch-file" name="batch-file" type="file" accept=".csv" required></div>
+          <div class="field"><label>&nbsp;</label><button id="batch-submit" type="submit">Submit batch</button></div>
+        </div>
+      </form>
+      <div id="batch-card" class="card hidden" style="margin-top:1rem;">
+        <h3>Batch summary</h3>
+        <div class="response" id="batch-json"></div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:2rem; display:grid; gap:1rem;">
+      <div>
+        <h2>Production-ready deployment</h2>
+        <p class="meta">This app is built to run on Render using Docker. The same API powers both the browser UI and programmatic clients.</p>
+      </div>
+      <div class="row-2">
+        <div>
+          <h3>API Endpoints</h3>
+          <ul>
+            <li><code>GET /</code> - dashboard UI</li>
+            <li><code>GET /health</code> - health & service info</li>
+            <li><code>POST /predict</code> - single record inference</li>
+            <li><code>POST /batch-predict</code> - CSV upload inference</li>
+            <li><code>GET /valid-values</code> - valid categorical values</li>
+            <li><code>GET /docs</code> - Swagger docs</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Quick tips</h3>
+          <ul>
+            <li>Use the browser form for fast testing.</li>
+            <li>Use <code>/docs</code> for schema examples.</li>
+            <li>Upload CSV files with original UCI Adult headers.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const valueFields = [
+      'workclass', 'education', 'marital_status', 'occupation',
+      'relationship', 'race', 'sex', 'native_country'
+    ];
+
+    const form = document.getElementById('predict-form');
+    const resultCard = document.getElementById('result-card');
+    const resultSummary = document.getElementById('result-summary');
+    const resultJson = document.getElementById('result-json');
+    const batchForm = document.getElementById('batch-form');
+    const batchCard = document.getElementById('batch-card');
+    const batchJson = document.getElementById('batch-json');
+
+    async function loadValidValues() {
+      try {
+        const response = await fetch('/valid-values');
+        const values = await response.json();
+        for (const field of valueFields) {
+          const select = document.getElementById(field);
+          if (!select) continue;
+          const options = values[field] || [];
+          select.innerHTML = options.map(value => `<option value="${value}">${value}</option>`).join('');
+        }
+      } catch (error) {
+        console.error('Could not load valid values:', error);
+      }
+    }
+
+    function buildPayload() {
+      return {
+        age: Number(document.getElementById('age').value),
+        workclass: document.getElementById('workclass').value,
+        fnlwgt: Number(document.getElementById('fnlwgt').value),
+        education: document.getElementById('education').value,
+        education_num: Number(document.getElementById('education_num').value),
+        marital_status: document.getElementById('marital_status').value,
+        occupation: document.getElementById('occupation').value,
+        relationship: document.getElementById('relationship').value,
+        race: document.getElementById('race').value,
+        sex: document.getElementById('sex').value,
+        capital_gain: Number(document.getElementById('capital_gain').value),
+        capital_loss: Number(document.getElementById('capital_loss').value),
+        hours_per_week: Number(document.getElementById('hours_per_week').value),
+        native_country: document.getElementById('native_country').value,
+      };
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      resultCard.classList.add('hidden');
+      resultSummary.textContent = 'Running prediction…';
+      resultJson.textContent = '';
+
+      try {
+        const payload = buildPayload();
+        const response = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Prediction failed');
+        }
+
+        const data = await response.json();
+        resultSummary.innerHTML = `Income: <strong>${data.income_class}</strong> &nbsp;·&nbsp; Confidence: <span class="pill ${data.confidence.toLowerCase()}">${data.confidence}</span>`;
+        resultJson.textContent = JSON.stringify(data, null, 2);
+        resultCard.classList.remove('hidden');
+      } catch (err) {
+        resultSummary.textContent = err.message;
+        resultJson.textContent = '';
+        resultCard.classList.remove('hidden');
+      }
+    });
+
+    batchForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      batchCard.classList.add('hidden');
+      batchJson.textContent = 'Uploading CSV…';
+
+      const fileInput = document.getElementById('batch-file');
+      if (!fileInput.files.length) {
+        batchJson.textContent = 'Please select a CSV file.';
+        batchCard.classList.remove('hidden');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      try {
+        const response = await fetch('/batch-predict', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Batch prediction failed');
+        }
+
+        const data = await response.json();
+        batchJson.textContent = JSON.stringify(data, null, 2);
+        batchCard.classList.remove('hidden');
+      } catch (err) {
+        batchJson.textContent = err.message;
+        batchCard.classList.remove('hidden');
+      }
+    });
+
+    loadValidValues();
+  </script>
+</body>
+</html>
